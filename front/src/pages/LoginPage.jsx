@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext'
 export function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
+  const [forgotMode, setForgotMode] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotSent, setForgotSent] = useState(false)
   const navigate = useNavigate()
   const { login } = useAuth()
 
@@ -38,52 +41,89 @@ export function LoginPage() {
         <div className="auth-logo">
           <Link to="/">Acolhe+</Link>
         </div>
-        <h2>Entrar na sua conta</h2>
-        <p className="auth-subtitle">Acesse sua conta pra continuar.</p>
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <div className="form-group">
-            <label htmlFor="email">E-mail</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={form.email}
-              onChange={handleChange}
-              className={errors.email ? 'input-error' : ''}
-              autoComplete="email"
-            />
-            {errors.email && <span className="field-error">{errors.email}</span>}
-          </div>
+        {forgotMode ? (
+          <>
+            <h2>Recuperar senha</h2>
+            <p className="auth-subtitle">Informe seu e-mail e enviaremos as instruções.</p>
 
-          <div className="form-group">
-            <div className="label-row">
-              <label htmlFor="password">Senha</label>
-              <a href="/#" className="link-small">Esqueci minha senha</a>
-            </div>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-              className={errors.password ? 'input-error' : ''}
-              autoComplete="current-password"
-            />
-            {errors.password && <span className="field-error">{errors.password}</span>}
-          </div>
+            {forgotSent ? (
+              <div className="profile-edit-success" style={{ marginTop: 16, textAlign: 'center' }}>
+                Se o e-mail <strong>{forgotEmail}</strong> estiver cadastrado, você receberá as instruções em breve.
+              </div>
+            ) : (
+              <form className="auth-form" onSubmit={e => { e.preventDefault(); if (/\S+@\S+\.\S+/.test(forgotEmail)) setForgotSent(true) }} noValidate>
+                <div className="form-group">
+                  <label htmlFor="forgot-email">E-mail</label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={forgotEmail}
+                    onChange={e => setForgotEmail(e.target.value)}
+                    autoComplete="email"
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary btn-full">Enviar instruções</button>
+              </form>
+            )}
 
-          <button type="submit" className="btn btn-primary btn-full">
-            Entrar
-          </button>
-        </form>
+            <p className="auth-footer">
+              <button className="btn-link" onClick={() => { setForgotMode(false); setForgotSent(false); setForgotEmail('') }}>
+                Voltar para login
+              </button>
+            </p>
+          </>
+        ) : (
+          <>
+            <h2>Entrar na sua conta</h2>
+            <p className="auth-subtitle">Acesse sua conta pra continuar.</p>
 
-        <p className="auth-footer">
-          Não tem conta?{' '}
-          <Link to="/cadastro">Criar conta gratuita</Link>
-        </p>
+            <form className="auth-form" onSubmit={handleSubmit} noValidate>
+              <div className="form-group">
+                <label htmlFor="email">E-mail</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={form.email}
+                  onChange={handleChange}
+                  className={errors.email ? 'input-error' : ''}
+                  autoComplete="email"
+                />
+                {errors.email && <span className="field-error">{errors.email}</span>}
+              </div>
+
+              <div className="form-group">
+                <div className="label-row">
+                  <label htmlFor="password">Senha</label>
+                  <button type="button" className="btn-link" onClick={() => setForgotMode(true)}>Esqueci minha senha</button>
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={handleChange}
+                  className={errors.password ? 'input-error' : ''}
+                  autoComplete="current-password"
+                />
+                {errors.password && <span className="field-error">{errors.password}</span>}
+              </div>
+
+              <button type="submit" className="btn btn-primary btn-full">
+                Entrar
+              </button>
+            </form>
+
+            <p className="auth-footer">
+              Não tem conta?{' '}
+              <Link to="/cadastro">Criar conta gratuita</Link>
+            </p>
+          </>
+        )}
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -8,8 +8,15 @@ const roleTitles = {
   empresa: 'Ficha da empresa parceira',
 }
 
+const statusClass = {
+  'Agendada': 'session-status-agendada',
+  'Realizada': '',
+  'Cancelada': 'session-status-cancelada',
+}
+
 export function FichaPage() {
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, updateUser } = useAuth()
+  const [toast, setToast] = useState('')
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -17,10 +24,21 @@ export function FichaPage() {
 
   const isPatient = user.role === 'paciente'
   const sessions = user.sessions || []
-  const uniqueProfessionals = [...new Set(sessions.map((session) => session.professional))]
+  const uniqueProfessionals = [...new Set(sessions.filter(s => s.status !== 'Cancelada').map(s => s.professional))]
+  const activeSessions = sessions.filter(s => s.status !== 'Cancelada')
+
+  function cancelSession(sessionId) {
+    const updated = sessions.map(s =>
+      s.id === sessionId ? { ...s, status: 'Cancelada' } : s
+    )
+    updateUser({ sessions: updated })
+    setToast('Sessão cancelada.')
+    setTimeout(() => setToast(''), 3000)
+  }
 
   return (
     <div className="profile-hub container">
+      {toast && <div className="toast">{toast}</div>}
       <div className="profile-hub-card">
         <h1>{roleTitles[user.role] || 'Minha ficha'}</h1>
         <p className="profile-hub-subtitle">Dados gerais e histórico de sessões.</p>
@@ -35,8 +53,8 @@ export function FichaPage() {
 
                 <div className="patient-summary-grid">
                   <div className="summary-card">
-                    <span>Total de sessões</span>
-                    <strong>{sessions.length}</strong>
+                    <span>Sessões ativas</span>
+                    <strong>{activeSessions.length}</strong>
                   </div>
                   <div className="summary-card">
                     <span>Profissionais que atenderam</span>
@@ -52,20 +70,34 @@ export function FichaPage() {
               <aside className="sessions-card">
                 <div className="sessions-card-header">
                   <h2>Sessões registradas</h2>
-                  <p>Registros feitos pelos profissionais.</p>
+                  <p>Registros feitos pelos profissionais e agendamentos.</p>
                 </div>
 
                 <div className="sessions-list">
-                  {user.sessions?.map((session) => (
-                    <article key={session.id} className="session-item">
-                      <div className="session-item-header">
-                        <strong>{session.professional}</strong>
-                        <span>{session.status}</span>
-                      </div>
-                      <p className="session-meta">{session.specialty} • {session.date}</p>
-                      <p className="session-notes">{session.notes}</p>
-                    </article>
-                  ))}
+                  {sessions.length === 0 ? (
+                    <div className="empty-state" style={{ padding: '32px 0' }}>
+                      <p>Nenhuma sessão registrada ainda.</p>
+                    </div>
+                  ) : (
+                    sessions.map((session) => (
+                      <article key={session.id} className="session-item">
+                        <div className="session-item-header">
+                          <strong>{session.professional}</strong>
+                          <span className={statusClass[session.status] || ''}>{session.status}</span>
+                        </div>
+                        <p className="session-meta">
+                          {session.specialty} • {session.date}
+                          {session.time && ` às ${session.time}`}
+                        </p>
+                        <p className="session-notes">{session.notes}</p>
+                        {session.status === 'Agendada' && (
+                          <button className="session-cancel-btn" onClick={() => cancelSession(session.id)}>
+                            Cancelar sessão
+                          </button>
+                        )}
+                      </article>
+                    ))
+                  )}
                 </div>
               </aside>
             </div>

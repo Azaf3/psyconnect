@@ -6,6 +6,7 @@ import { HomePanel } from './components/HomePanel'
 import { AccessProfiles } from './components/AccessProfiles'
 import { SpecialtyGrid } from './components/SpecialtyGrid'
 import { AppShortcuts } from './components/AppShortcuts'
+import { UserFeedback } from './components/UserFeedback'
 import { SearchPage } from './pages/SearchPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -20,6 +21,7 @@ function HomePage() {
       <AccessProfiles />
       <SpecialtyGrid />
       <AppShortcuts />
+      <UserFeedback />
     </main>
   )
 }

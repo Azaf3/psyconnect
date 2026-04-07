@@ -18,7 +18,7 @@ export function RegisterPage() {
     },
     psicologo: {
       title: 'Cadastrar perfil profissional',
-      subtitle: 'Cadastre seu perfil e atenda diferentes públicos pela plataforma.',
+      subtitle: 'Psicólogos, psicanalistas e psiquiatras — cadastre seu perfil e atenda pela plataforma.',
       nameLabel: 'Nome profissional',
       namePlaceholder: 'Seu nome como deseja exibir',
     },
@@ -95,7 +95,7 @@ export function RegisterPage() {
 
         <div className="role-helper-box">
           {role === 'paciente' && <p>Pra quem quer atendimento social, plano essencial ou benefício corporativo.</p>}
-          {role === 'psicologo' && <p>Monte seu perfil e participe das frentes de atendimento social, renda média e empresas.</p>}
+          {role === 'psicologo' && <p>Psicólogos, psicanalistas e psiquiatras — monte seu perfil e participe das frentes de atendimento.</p>}
           {role === 'empresa' && <p>Cadastre a empresa e subsidie sessões pros seus colaboradores.</p>}
         </div>
 

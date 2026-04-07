@@ -1,6 +1,6 @@
 # Acolhe+
 
-Plataforma de conexão entre pacientes e profissionais de psicologia.
+Plataforma de conexão entre pacientes e profissionais de saúde mental (psicólogos, psicanalistas e psiquiatras).
 
 ## Estrutura
 
@@ -28,7 +28,7 @@ npm run build
 
 ## Fluxo Principal
 
-1. **Buscar** - Usuários encontram psicólogos por especialidade, formato e horário
+1. **Buscar** - Usuários encontram profissionais por especialidade, profissão, formato e horário
 2. **Comparar** - Visualizam biografia, experiência e próximos horários
 3. **Agendar** - Finalizam agendamento em poucos cliques
 

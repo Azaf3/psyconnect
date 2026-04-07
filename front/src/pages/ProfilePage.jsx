@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -10,10 +10,28 @@ const roleLabels = {
 
 export function ProfilePage() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout, updateUser } = useAuth()
+  const [editing, setEditing] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', email: '' })
+  const [saved, setSaved] = useState(false)
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  function startEdit() {
+    setEditForm({ name: user.name || '', email: user.email || '' })
+    setEditing(true)
+    setSaved(false)
+  }
+
+  function saveEdit(e) {
+    e.preventDefault()
+    if (!editForm.name.trim() || !editForm.email.trim()) return
+    updateUser({ name: editForm.name.trim(), email: editForm.email.trim() })
+    setEditing(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
   }
 
   function handleLogout() {
@@ -33,18 +51,51 @@ export function ProfilePage() {
           </div>
         </div>
 
+        {saved && <div className="profile-edit-success">Dados atualizados com sucesso.</div>}
+
         <div className="profile-hub-grid">
           <button className="profile-shortcut" onClick={() => navigate('/minha-ficha')}>
             <strong>Minha ficha</strong>
             <span>Histórico de sessões e dados cadastrais</span>
           </button>
           <button className="profile-shortcut" onClick={() => navigate('/buscar')}>
-            <strong>Buscar profissionais</strong>
-            <span>Pesquisar por especialidade ou nome</span>
+            <strong>Buscar profissional</strong>
+            <span>Psicólogos, psicanalistas e psiquiatras</span>
           </button>
         </div>
 
-        <button className="btn btn-outline btn-full" onClick={handleLogout}>
+        {editing ? (
+          <form className="profile-edit-form" onSubmit={saveEdit}>
+            <div className="form-group">
+              <label htmlFor="edit-name">Nome</label>
+              <input
+                id="edit-name"
+                type="text"
+                value={editForm.name}
+                onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="edit-email">E-mail</label>
+              <input
+                id="edit-email"
+                type="email"
+                value={editForm.email}
+                onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+              />
+            </div>
+            <div className="profile-edit-actions">
+              <button type="submit" className="btn btn-primary">Salvar</button>
+              <button type="button" className="btn btn-outline" onClick={() => setEditing(false)}>Cancelar</button>
+            </div>
+          </form>
+        ) : (
+          <button className="btn btn-outline btn-full" onClick={startEdit} style={{ marginBottom: 12 }}>
+            Editar perfil
+          </button>
+        )}
+
+        <button className="btn btn-ghost btn-full" onClick={handleLogout}>
           Sair da conta
         </button>
       </div>

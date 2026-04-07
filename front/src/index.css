@@ -1,45 +1,8 @@
-:root {
-  --page-bg: #f4efe6;
-  --panel-bg: rgba(255, 252, 248, 0.82);
-  --title: #163835;
-  --text: #46615c;
-  --muted: #6a817d;
-  --border: rgba(22, 56, 53, 0.12);
-  --chip-bg: rgba(188, 223, 217, 0.7);
-  --chip-text: #163835;
-  --action-strong: #205750;
-  --action-soft: #699791;
-  --soft-shadow: 0 16px 40px rgba(34, 63, 58, 0.08);
-  --sans: 'Aptos', 'Trebuchet MS', 'Segoe UI', sans-serif;
-  --heading: 'Georgia', 'Times New Roman', serif;
-
-  font-family: var(--sans);
-  font-size: 18px;
-  line-height: 1.55;
-  font-weight: 400;
-  color: var(--text);
-  background:
-    radial-gradient(circle at top, rgba(232, 243, 239, 0.85), transparent 36%),
-    linear-gradient(180deg, #faf6ef 0%, #f4efe6 48%, #efe7db 100%);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
+/* Reset mínimo — design system principal está em App.css */
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: transparent;
 }
 
 button {
@@ -47,50 +10,5 @@ button {
 }
 
 #root {
-  width: min(1220px, 100%);
-  margin: 0 auto;
   min-height: 100vh;
-}
-
-h1,
-h2,
-h3,
-strong {
-  color: var(--title);
-}
-
-h1,
-h2,
-h3 {
-  font-family: var(--heading);
-  line-height: 1.05;
-}
-
-h1 {
-  margin: 0;
-  font-size: clamp(3rem, 7vw, 5.4rem);
-}
-
-h2 {
-  margin: 0;
-  font-size: clamp(2rem, 4vw, 3rem);
-}
-
-h3 {
-  font-size: 1.35rem;
-}
-
-p {
-  margin: 0;
-}
-
-small,
-dt {
-  font-weight: 600;
-}
-
-@media (max-width: 760px) {
-  :root {
-    font-size: 16px;
-  }
 }

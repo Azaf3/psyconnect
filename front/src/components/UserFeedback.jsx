@@ -14,27 +14,9 @@ function Stars({ count = 5 }) {
 
 export function UserFeedback() {
   const reviews = [
-    {
-      text: 'Encontrei o psicólogo certo em menos de 10 minutos. A plataforma é intuitiva e os profissionais são muito acolhedores.',
-      author: 'Maria Silva',
-      role: 'Paciente há 8 meses',
-      stars: 5,
-      initial: 'M',
-    },
-    {
-      text: 'Depois de anos adiando, finalmente me consultei. O processo de agendamento é simples e o atendimento online funciona perfeitamente.',
-      author: 'João Santos',
-      role: 'Paciente há 3 meses',
-      stars: 5,
-      initial: 'J',
-    },
-    {
-      text: 'Como psicóloga, o Acolhe+ me ajudou a organizar minha agenda e alcançar mais pacientes que realmente precisam de ajuda.',
-      author: 'Dra. Ana Costa',
-      role: 'Psicóloga CRP 06/98431',
-      stars: 5,
-      initial: 'A',
-    },
+    { text: 'Achei o profissional certo em minutos!', author: 'Maria S.', stars: 5, initial: 'M' },
+    { text: 'Agendamento simples, atendimento ótimo.', author: 'João S.', stars: 5, initial: 'J' },
+    { text: 'Organizou minha agenda e trouxe pacientes.', author: 'Dra. Ana C.', stars: 5, initial: 'A' },
   ]
 
   return (
@@ -52,10 +34,7 @@ export function UserFeedback() {
               <p className="testimonial-text">{review.text}</p>
               <div className="testimonial-footer">
                 <div className="testimonial-avatar">{review.initial}</div>
-                <div>
-                  <p className="testimonial-author">{review.author}</p>
-                  <p className="testimonial-role">{review.role}</p>
-                </div>
+                <p className="testimonial-author">{review.author}</p>
               </div>
             </div>
           ))}

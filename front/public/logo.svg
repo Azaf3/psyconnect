@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" fill="none">
+  <!-- Heart/shield icon -->
+  <rect x="0" y="4" width="32" height="32" rx="8" fill="#2563eb"/>
+  <path d="M16 12c-1.5-2.5-5-3-7 0s0 7 7 12c7-5 9-9 7-12s-5.5-2.5-7 0z" fill="white"/>
+  <!-- Text -->
+  <text x="38" y="28" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="800" fill="#111827">
+    Acolhe<tspan fill="#2563eb">+</tspan>
+  </text>
+</svg>

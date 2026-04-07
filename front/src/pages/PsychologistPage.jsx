@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { PSYCHOLOGISTS } from '../data/psychologists'
+import { useAuth } from '../context/AuthContext'
 
 function StarRating({ value }) {
   return (
@@ -16,7 +17,13 @@ function StarRating({ value }) {
 export function PsychologistPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user, isAuthenticated, updateUser } = useAuth()
   const psy = PSYCHOLOGISTS.find(p => p.id === Number(id))
+
+  const [showBooking, setShowBooking] = useState(false)
+  const [selectedDay, setSelectedDay] = useState('')
+  const [selectedTime, setSelectedTime] = useState('')
+  const [bookingDone, setBookingDone] = useState(false)
 
   if (!psy) {
     return (
@@ -25,6 +32,49 @@ export function PsychologistPage() {
         <Link to="/buscar" className="btn btn-primary">Voltar para busca</Link>
       </div>
     )
+  }
+
+  const timeSlots = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00']
+
+  function getNextDates() {
+    const days = []
+    const today = new Date()
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(today)
+      d.setDate(today.getDate() + i)
+      const dayName = d.toLocaleDateString('pt-BR', { weekday: 'short' })
+      days.push({
+        label: `${dayName} ${d.getDate()}/${d.getMonth() + 1}`,
+        value: d.toLocaleDateString('pt-BR'),
+      })
+    }
+    return days
+  }
+
+  function handleBooking() {
+    if (!isAuthenticated) {
+      navigate('/cadastro')
+      return
+    }
+    setShowBooking(true)
+  }
+
+  function confirmBooking() {
+    if (!selectedDay || !selectedTime) return
+
+    const newSession = {
+      id: Date.now(),
+      professional: psy.name,
+      specialty: psy.specialty,
+      date: selectedDay,
+      time: selectedTime,
+      status: 'Agendada',
+      notes: `Sessão de ${psy.specialty.toLowerCase()} — ${psy.approach}`,
+    }
+
+    const currentSessions = user.sessions || []
+    updateUser({ sessions: [...currentSessions, newSession] })
+    setBookingDone(true)
   }
 
   return (
@@ -39,12 +89,10 @@ export function PsychologistPage() {
       <div className="profile-layout">
         <div className="profile-main">
           <div className="profile-hero">
-            <div className="psy-avatar psy-avatar-lg">
-              {psy.name.split(' ').slice(0, 2).map(n => n[0]).join('')}
-            </div>
+            <img className="psy-photo psy-photo-lg" src={psy.photo} alt={psy.name} />
             <div className="profile-identity">
               <h1>{psy.name}</h1>
-              <p className="profile-crp">{psy.crp}</p>
+              <p className="profile-crp">{psy.profession} • {psy.crp}</p>
               <div className="psy-tags">
                 <span className="tag tag-specialty">{psy.specialty}</span>
                 <span className="tag tag-approach">{psy.approach}</span>
@@ -116,16 +164,81 @@ export function PsychologistPage() {
                 {psy.schedule.map(s => <li key={s}>{s}</li>)}
               </ul>
             </div>
-            <button className="btn btn-primary btn-full" onClick={() => navigate('/cadastro')}>
+            <button className="btn btn-primary btn-full" onClick={handleBooking}>
               Agendar sessão
             </button>
-            <button className="btn btn-outline btn-full" onClick={() => navigate('/cadastro')}>
-              Enviar mensagem
+            <button className="btn btn-outline btn-full" onClick={() => isAuthenticated ? navigate('/minha-ficha') : navigate('/cadastro')}>
+              {isAuthenticated ? 'Ver minha ficha' : 'Enviar mensagem'}
             </button>
-            <p className="booking-note">Você precisará criar uma conta para agendar.</p>
+            <p className="booking-note">
+              {isAuthenticated ? 'Escolha um horário para agendar.' : 'Você precisará criar uma conta para agendar.'}
+            </p>
           </div>
         </aside>
       </div>
+
+      {showBooking && (
+        <div className="modal-overlay" onClick={() => { setShowBooking(false); setBookingDone(false); setSelectedDay(''); setSelectedTime('') }}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            {bookingDone ? (
+              <div className="booking-success">
+                <div className="success-icon">✓</div>
+                <h2>Sessão agendada</h2>
+                <p>Sua sessão com <strong>{psy.name}</strong> foi marcada para <strong>{selectedDay}</strong> às <strong>{selectedTime}</strong>.</p>
+                <div className="booking-success-actions">
+                  <button className="btn btn-primary" onClick={() => navigate('/minha-ficha')}>Ver minha ficha</button>
+                  <button className="btn btn-outline" onClick={() => { setShowBooking(false); setBookingDone(false); setSelectedDay(''); setSelectedTime('') }}>Fechar</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h2>Agendar com {psy.name}</h2>
+                <p className="modal-subtitle">{psy.specialty} • {psy.approach} • R$ {psy.price}/sessão</p>
+
+                <div className="booking-step">
+                  <h4>Escolha o dia</h4>
+                  <div className="date-grid">
+                    {getNextDates().map(d => (
+                      <button
+                        key={d.value}
+                        type="button"
+                        className={`date-chip ${selectedDay === d.value ? 'active' : ''}`}
+                        onClick={() => setSelectedDay(d.value)}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="booking-step">
+                  <h4>Escolha o horário</h4>
+                  <div className="time-grid">
+                    {timeSlots.map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`time-chip ${selectedTime === t ? 'active' : ''}`}
+                        onClick={() => setSelectedTime(t)}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  className="btn btn-primary btn-full"
+                  disabled={!selectedDay || !selectedTime}
+                  onClick={confirmBooking}
+                >
+                  Confirmar agendamento
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
