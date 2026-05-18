@@ -52,6 +52,8 @@ export function PsychologistPage() {
   }
 
   function handleBooking() {
+    // Profissional não pode agendar sessão
+    if (user?.role === 'profissional') return
     if (!isAuthenticated) {
       navigate('/cadastro')
       return
@@ -60,8 +62,10 @@ export function PsychologistPage() {
   }
 
   function confirmBooking() {
+    // Profissional não pode agendar sessão
+    if (user?.role === 'profissional') return
     if (!selectedDay || !selectedTime) return
-
+    // ...restante igual
     const newSession = {
       id: Date.now(),
       professional: psy.name,
@@ -71,12 +75,13 @@ export function PsychologistPage() {
       status: 'Agendada',
       notes: `Sessão de ${psy.specialty.toLowerCase()} — ${psy.approach}`,
     }
-
     const currentSessions = user.sessions || []
     updateUser({ sessions: [...currentSessions, newSession] })
     setBookingDone(true)
   }
 
+  // Profissional não pode agendar nem ver ficha de paciente
+  const isProfessional = user?.role === 'profissional'
   return (
     <div className="profile-page container">
       <Link to="/buscar" className="back-link">
@@ -164,20 +169,25 @@ export function PsychologistPage() {
                 {psy.schedule.map(s => <li key={s}>{s}</li>)}
               </ul>
             </div>
-            <button className="btn btn-primary btn-full" onClick={handleBooking}>
-              Agendar sessão
-            </button>
-            <button className="btn btn-outline btn-full" onClick={() => isAuthenticated ? navigate('/minha-ficha') : navigate('/cadastro')}>
-              {isAuthenticated ? 'Ver minha ficha' : 'Enviar mensagem'}
-            </button>
-            <p className="booking-note">
-              {isAuthenticated ? 'Escolha um horário para agendar.' : 'Você precisará criar uma conta para agendar.'}
-            </p>
+            {!isProfessional && (
+              <>
+                <button className="btn btn-primary btn-full" onClick={handleBooking}>
+                  Agendar sessão
+                </button>
+                <button className="btn btn-outline btn-full" onClick={() => isAuthenticated ? navigate('/minha-ficha') : navigate('/cadastro')}>
+                  {isAuthenticated ? 'Ver minha ficha' : 'Enviar mensagem'}
+                </button>
+                <p className="booking-note">
+                  {isAuthenticated ? 'Escolha um horário para agendar.' : 'Você precisará criar uma conta para agendar.'}
+                </p>
+              </>
+            )}
           </div>
         </aside>
       </div>
 
-      {showBooking && (
+      {/* Modal de agendamento só para paciente */}
+      {!isProfessional && showBooking && (
         <div className="modal-overlay" onClick={() => { setShowBooking(false); setBookingDone(false); setSelectedDay(''); setSelectedTime('') }}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
             {bookingDone ? (

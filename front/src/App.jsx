@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import './App.css'
 import { TopBar } from './components/TopBar'
 import { BottomNav } from './components/BottomNav'
@@ -13,6 +13,11 @@ import { RegisterPage } from './pages/RegisterPage'
 import { PsychologistPage } from './pages/PsychologistPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { FichaPage } from './pages/FichaPage'
+import { ProfessionalLayout } from './pages/profissional/ProfessionalLayout'
+import { DashboardPage } from './pages/profissional/DashboardPage'
+import { AgendaPage } from './pages/profissional/AgendaPage'
+import { ProfessionalProfilePage } from './pages/profissional/ProfessionalProfilePage'
+import { PacientesPage } from './pages/profissional/PacientesPage'
 
 function HomePage() {
   return (
@@ -27,9 +32,13 @@ function HomePage() {
 }
 
 function App() {
+  const location = useLocation()
+  const isProfessionalArea = location.pathname.startsWith('/profissional/')
+    && !location.pathname.match(/^\/profissional\/\d/)
+
   return (
     <div className="app">
-      <TopBar />
+      {!isProfessionalArea && <TopBar />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/buscar" element={<SearchPage />} />
@@ -38,8 +47,15 @@ function App() {
         <Route path="/perfil" element={<ProfilePage />} />
         <Route path="/minha-ficha" element={<FichaPage />} />
         <Route path="/profissional/:id" element={<PsychologistPage />} />
+
+        <Route path="/profissional" element={<ProfessionalLayout />}>
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="agenda" element={<AgendaPage />} />
+          <Route path="pacientes" element={<PacientesPage />} />
+          <Route path="perfil" element={<ProfessionalProfilePage />} />
+        </Route>
       </Routes>
-      <BottomNav />
+      {!isProfessionalArea && <BottomNav />}
     </div>
   )
 }

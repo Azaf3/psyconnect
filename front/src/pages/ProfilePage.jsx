@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 
 const roleLabels = {
   paciente: 'Paciente',
+  profissional: 'Profissional',
   psicologo: 'Psicólogo',
   empresa: 'Empresa parceira',
 }
@@ -17,6 +18,10 @@ export function ProfilePage() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+  // Profissional não pode acessar perfil de paciente
+  if (user.role === 'profissional') {
+    return <Navigate to="/profissional/dashboard" replace />
   }
 
   function startEdit() {

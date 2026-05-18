@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { api } from '../api'
 
 const roleTitles = {
   paciente: 'Ficha do paciente',
@@ -9,31 +10,59 @@ const roleTitles = {
 }
 
 const statusClass = {
-  'Agendada': 'session-status-agendada',
-  'Realizada': '',
-  'Cancelada': 'session-status-cancelada',
+  Agendada: 'session-status-agendada',
+  Realizada: '',
+  Cancelada: 'session-status-cancelada',
 }
 
 export function FichaPage() {
-  const { user, isAuthenticated, updateUser } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [toast, setToast] = useState('')
+  const [sessions, setSessions] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    api.getAppointments()
+      .then(data => setSessions(data))
+      .catch(() => setSessions([]))
+      .finally(() => setLoading(false))
+  }, [isAuthenticated])
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
+  const isProfessional = user.role === 'profissional'
   const isPatient = user.role === 'paciente'
-  const sessions = user.sessions || []
-  const uniqueProfessionals = [...new Set(sessions.filter(s => s.status !== 'Cancelada').map(s => s.professional))]
-  const activeSessions = sessions.filter(s => s.status !== 'Cancelada')
+  const showProfessionals = !isProfessional
+  const activeSessions = sessions.filter(s => s.status !== 'cancelado')
+  const uniqueProfessionals = Array.from(
+    new Set(sessions.map(session => session.profissionalId?._id).filter(Boolean))
+  )
 
-  function cancelSession(sessionId) {
-    const updated = sessions.map(s =>
-      s.id === sessionId ? { ...s, status: 'Cancelada' } : s
-    )
-    updateUser({ sessions: updated })
-    setToast('Sessão cancelada.')
-    setTimeout(() => setToast(''), 3000)
+  if (isProfessional && !window.location.pathname.match(/\/profissional\/pacientes\//)) {
+    return <Navigate to="/profissional/dashboard" replace />
+  }
+
+  async function cancelSession(sessionId) {
+    try {
+      await api.cancelAppointment(sessionId)
+      setSessions(prev => prev.map(s => s._id === sessionId ? { ...s, status: 'cancelado' } : s))
+      setToast('Sessão cancelada.')
+      setTimeout(() => setToast(''), 3000)
+    } catch {
+      setToast('Erro ao cancelar sessão.')
+      setTimeout(() => setToast(''), 3000)
+    }
+  }
+
+  const statusLabels = {
+    agendado: 'Agendada',
+    confirmado: 'Confirmada',
+    cancelado: 'Cancelada',
+    concluido: 'Realizada',
   }
 
   return (
@@ -43,7 +72,7 @@ export function FichaPage() {
         <h1>{roleTitles[user.role] || 'Minha ficha'}</h1>
         <p className="profile-hub-subtitle">Dados gerais e histórico de sessões.</p>
 
-        {isPatient ? (
+        {isPatient || isProfessional ? (
           <>
             <div className="patient-ficha-layout">
               <section className="patient-ficha-panel">
@@ -56,70 +85,54 @@ export function FichaPage() {
                     <span>Sessões ativas</span>
                     <strong>{activeSessions.length}</strong>
                   </div>
-                  <div className="summary-card">
-                    <span>Profissionais que atenderam</span>
-                    <strong>{uniqueProfessionals.length}</strong>
-                  </div>
-                  <div className="summary-card summary-card-wide">
-                    <span>Profissionais</span>
-                    <strong>{uniqueProfessionals.join(', ') || 'Nenhum atendimento registrado'}</strong>
-                  </div>
+                  {showProfessionals && (
+                    <div className="summary-card">
+                      <span>Profissionais atendentes</span>
+                      <strong>{uniqueProfessionals.length}</strong>
+                    </div>
+                  )}
                 </div>
               </section>
 
-              <aside className="sessions-card">
-                <div className="sessions-card-header">
-                  <h2>Sessões registradas</h2>
-                  <p>Registros feitos pelos profissionais e agendamentos.</p>
-                </div>
-
-                <div className="sessions-list">
-                  {sessions.length === 0 ? (
-                    <div className="empty-state" style={{ padding: '32px 0' }}>
-                      <p>Nenhuma sessão registrada ainda.</p>
-                    </div>
-                  ) : (
-                    sessions.map((session) => (
-                      <article key={session.id} className="session-item">
+              <section className="patient-ficha-history">
+                <h2>Histórico de sessões</h2>
+                {sessions.length === 0 ? (
+                  <div className="empty-list">
+                    <p>Nenhuma sessão registrada ainda.</p>
+                  </div>
+                ) : (
+                  sessions.map((session) => {
+                    const isOwnProfessional = isProfessional && session.profissionalId?._id === user.id
+                    return (
+                      <article key={session._id} className="session-item">
                         <div className="session-item-header">
-                          <strong>{session.professional}</strong>
-                          <span className={statusClass[session.status] || ''}>{session.status}</span>
+                          {showProfessionals && <strong>{session.profissionalId?.name || 'Profissional'}</strong>}
+                          <span className={statusClass[statusLabels[session.status]] || ''}>
+                            {statusLabels[session.status] || session.status}
+                          </span>
                         </div>
                         <p className="session-meta">
-                          {session.specialty} • {session.date}
-                          {session.time && ` às ${session.time}`}
+                          {session.formato} • {new Date(session.data).toLocaleDateString('pt-BR')}
+                          {' às ' + new Date(session.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        <p className="session-notes">{session.notes}</p>
-                        {session.status === 'Agendada' && (
-                          <button className="session-cancel-btn" onClick={() => cancelSession(session.id)}>
+                        {(isPatient || isOwnProfessional) && (
+                          <p className="session-notes">{session.observacoes}</p>
+                        )}
+                        {session.status === 'agendado' && isPatient && (
+                          <button className="session-cancel-btn" onClick={() => cancelSession(session._id)}>
                             Cancelar sessão
                           </button>
                         )}
                       </article>
-                    ))
-                  )}
-                </div>
-              </aside>
+                    )
+                  })
+                )}
+              </section>
             </div>
           </>
         ) : (
-          <div className="ficha-grid">
-            <div className="ficha-item">
-              <span>Nome</span>
-              <strong>{user.name}</strong>
-            </div>
-            <div className="ficha-item">
-              <span>E-mail</span>
-              <strong>{user.email}</strong>
-            </div>
-            <div className="ficha-item">
-              <span>Perfil</span>
-              <strong>{user.role}</strong>
-            </div>
-            <div className="ficha-item">
-              <span>Faixa de atendimento</span>
-              <strong>Até R$ 50 por sessão</strong>
-            </div>
+          <div className="empty-list">
+            <p>Ficha não disponível.</p>
           </div>
         )}
       </div>

@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext'
 export function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
+  const [apiError, setApiError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotSent, setForgotSent] = useState(false)
@@ -18,15 +20,28 @@ export function LoginPage() {
     return errs
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    setApiError('')
     const errs = validate()
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
       return
     }
-    login(form)
-    navigate('/perfil')
+    setSubmitting(true)
+    try {
+      // tenta primeiro como paciente, se falhar tenta como profissional
+      try {
+        await login({ email: form.email, password: form.password, role: 'paciente' })
+      } catch {
+        await login({ email: form.email, password: form.password, role: 'profissional' })
+      }
+      navigate('/perfil')
+    } catch (err) {
+      setApiError(err.message || 'Email ou senha inválidos')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function handleChange(e) {
@@ -80,6 +95,7 @@ export function LoginPage() {
             <p className="auth-subtitle">Acesse sua conta pra continuar.</p>
 
             <form className="auth-form" onSubmit={handleSubmit} noValidate>
+              {apiError && <div className="field-error" style={{ marginBottom: 12, textAlign: 'center' }}>{apiError}</div>}
               <div className="form-group">
                 <label htmlFor="email">E-mail</label>
                 <input
@@ -113,8 +129,8 @@ export function LoginPage() {
                 {errors.password && <span className="field-error">{errors.password}</span>}
               </div>
 
-              <button type="submit" className="btn btn-primary btn-full">
-                Entrar
+              <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
+                {submitting ? 'Entrando...' : 'Entrar'}
               </button>
             </form>
 
