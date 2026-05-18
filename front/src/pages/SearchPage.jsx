@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { AUDIENCE_OPTIONS, PROFESSION_OPTIONS, PSYCHOLOGISTS } from '../data/psychologists'
+import { AUDIENCE_OPTIONS, PROFESSION_OPTIONS } from '../data/psychologists'
+import { api } from '../api'
 
 const SPECIALTIES = [
   'Ansiedade', 'Depressão', 'Relacionamentos', 'Autoconhecimento',
@@ -29,16 +30,26 @@ export function SearchPage() {
   const [modality, setModality] = useState('')
   const [profession, setProfession] = useState(searchParams.get('profissao') || '')
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [professionals, setProfessionals] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = useMemo(() => PSYCHOLOGISTS.filter(p => {
-    const matchQuery = !query || p.name.toLowerCase().includes(query.toLowerCase()) || p.specialty.toLowerCase().includes(query.toLowerCase()) || p.profession.toLowerCase().includes(query.toLowerCase())
-    const matchSpecialty = !specialty || p.specialty === specialty
-    const matchAudience = !audience || p.audience === audience
-    const matchApproach = !approach || p.approach === approach
-    const matchModality = !modality || (modality === 'online' ? p.online : p.presential)
-    const matchProfession = !profession || p.profession === profession
-    return matchQuery && matchSpecialty && matchAudience && matchApproach && matchModality && matchProfession
-  }), [approach, audience, modality, profession, query, specialty])
+  useEffect(() => {
+    const params = {}
+    if (query) params.q = query
+    if (specialty) params.specialty = specialty
+    if (audience) params.audience = audience
+    if (approach) params.approach = approach
+    if (modality) params.modality = modality
+    if (profession) params.profession = profession
+
+    setLoading(true)
+    api.getProfessionals(params)
+      .then(data => setProfessionals(data))
+      .catch(() => setProfessionals([]))
+      .finally(() => setLoading(false))
+  }, [query, specialty, audience, approach, modality, profession])
+
+  const filtered = professionals
 
   function handleSearch(e) {
     e.preventDefault()
@@ -149,6 +160,10 @@ export function SearchPage() {
         </aside>
 
         <main className="search-results">
+          {loading ? (
+            <p className="results-count">Buscando profissionais...</p>
+          ) : (
+          <>
           <p className="results-count">
             {filtered.length} profissional{filtered.length !== 1 ? 'is' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
           </p>
@@ -161,7 +176,7 @@ export function SearchPage() {
           ) : (
             <div className="psychologist-list">
               {filtered.map(p => (
-                <Link to={`/profissional/${p.id}`} key={p.id} className="psychologist-card">
+                <Link to={`/profissional/${p._id}`} key={p._id} className="psychologist-card">
                   <div className="psy-card-top">
                     <img className="psy-photo" src={p.photo} alt={p.name} />
                     <div className="psy-card-header">
@@ -184,6 +199,8 @@ export function SearchPage() {
                 </Link>
               ))}
             </div>
+          )}
+          </>
           )}
         </main>
       </div>

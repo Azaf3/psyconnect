@@ -6,6 +6,8 @@ export function RegisterPage() {
   const [role, setRole] = useState('paciente')
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
   const [errors, setErrors] = useState({})
+  const [apiError, setApiError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
   const { register } = useAuth()
 
@@ -39,19 +41,28 @@ export function RegisterPage() {
     return errs
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    setApiError('')
     const errs = validate()
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
       return
     }
-    register({
-      name: form.name,
-      email: form.email,
-      role,
-    })
-    navigate('/login')
+    setSubmitting(true)
+    try {
+      await register({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role,
+      })
+      navigate('/perfil')
+    } catch (err) {
+      setApiError(err.message || 'Erro ao criar conta')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function handleChange(e) {
@@ -100,6 +111,7 @@ export function RegisterPage() {
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          {apiError && <div className="field-error" style={{ marginBottom: 12, textAlign: 'center' }}>{apiError}</div>}
           <div className="form-group">
             <label htmlFor="name">{roleContent[role].nameLabel}</label>
             <input
@@ -167,8 +179,8 @@ export function RegisterPage() {
             <a href="/#">Política de Privacidade</a>.
           </p>
 
-          <button type="submit" className="btn btn-primary btn-full">
-            Criar conta
+          <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
+            {submitting ? 'Criando conta...' : 'Criar conta'}
           </button>
         </form>
 
